@@ -1,5 +1,7 @@
-import { LandingPage } from "@/components/landing-page"
+"use client"
 
-export default function Page() {
+import LandingPage from "../landing-page"
+
+export default function SyntheticV0PageForDeployment() {
   return <LandingPage />
 }
