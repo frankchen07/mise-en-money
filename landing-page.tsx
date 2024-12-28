@@ -40,7 +40,7 @@ export default function LandingPage() {
           <span className="sr-only">Mise en Money</span>
         </Link>
         <nav className="ml-auto flex gap-4 sm:gap-6">
-          <Link className="text-sm font-medium hover:underline underline-offset-4" href="#about">
+          <Link className="text-sm font-medium hover:underline underline-offset-4" href="/about">
             About
           </Link>
         </nav>
@@ -72,7 +72,7 @@ export default function LandingPage() {
                 </Button>
               </form>
               {status === 'success' && (
-                <p className="text-green-600">Thank you! An email will be sent shortly.</p>
+                <p className="text-green-600">Thank you! The guide will be sent to your email shortly.</p>
               )}
               {status === 'error' && (
                 <p className="text-red-600">An error occurred. Please try again later.</p>
@@ -86,7 +86,7 @@ export default function LandingPage() {
               <div className="space-y-6 max-w-[600px]">
                 <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Need extra help?</h2>
                 <p className="text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
-                Personal finances can be a DIY thing, but having extra help can be beneficial for accountability, speeding up savings growth, or really getting out of debt. Let's have a chat to see if it's a good fit for us!
+                  Personal finances can be a DIY thing, but having extra help can be beneficial for accountability, speeding up savings growth, or really getting out of debt. Let's have a chat to see if it's a good fit for us!
                 </p>
               </div>
               <Button size="lg" asChild>
