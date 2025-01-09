@@ -25,20 +25,20 @@ export default function AboutPage() {
                 </h1>
                 <div className="space-y-4 text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
                   <p>
-                    Hi, I'm your financial coach! With years of experience in both the service industry and financial planning,
-                    I understand the unique challenges that service workers face when it comes to managing their money.
+                  Mise en Money is personal finance for service workers.
                   </p>
                   <p>
-                    My approach combines practical financial strategies with mindset coaching, helping you build both the skills
-                    and confidence needed to take control of your financial future.
+                  It’s a play off of “mise en place”, which means “everything in its place.” Chefs use it to ensure that everything they need for a hectic service is organized and ready-to-go so they don’t end up in the weeds. We want this kind of organization for our finances.
                   </p>
                   <p>
-                    Whether you're looking to build emergency savings, get out of debt, or start investing for your future,
-                    I'm here to help you create a personalized plan that works for your lifestyle.
+                  Looking back at my own money journey, piecing together how to deal with my finances was stressful, and I wish I had better help.
+                  </p>
+                  <p>
+                  Mise en Money aims to be that help.
                   </p>
                 </div>
               </div>
-              <div className="flex flex-col sm:flex-row gap-4">
+              {/* <div className="flex flex-col sm:flex-row gap-4">
                 <Button size="lg" asChild>
                   <Link href="https://docs.google.com/forms/d/1IMIf2SPaB2SHVlUQ_K8I6vritWAkJoxyKQAgR0NgOHs/edit">
                     Start Your Journey
@@ -49,7 +49,7 @@ export default function AboutPage() {
                     Read My Blog
                   </Link>
                 </Button>
-              </div>
+              </div> */}
             </div>
           </div>
         </section>

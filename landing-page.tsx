@@ -68,11 +68,11 @@ export default function LandingPage() {
                   className="flex-1"
                 />
                 <Button type="submit" disabled={status === 'loading'}>
-                  {status === 'loading' ? 'Sending...' : 'Send me the guide'}
+                  {status === 'loading' ? 'Sending...' : 'Send me the plan'}
                 </Button>
               </form>
               {status === 'success' && (
-                <p className="text-green-600">Thank you! The guide will be sent to your email shortly.</p>
+                <p className="text-green-600">Thank you! The plan will be sent to your email shortly.</p>
               )}
               {status === 'error' && (
                 <p className="text-red-600">An error occurred. Please try again later.</p>
