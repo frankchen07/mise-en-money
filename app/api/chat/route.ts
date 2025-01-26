@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 
-const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions"
+// const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions"
+const DEEPSEEK_API_URL = "https://api.deepseek.com"
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY
 
 export async function POST(req: Request) {
