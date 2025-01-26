@@ -89,11 +89,16 @@ export default function LandingPage() {
                   Personal finances can be a DIY thing, but having extra help can be beneficial for accountability, speeding up savings growth, or really getting out of debt. Let's have a chat to see if it's a good fit for us!
                 </p>
               </div>
-              <Button size="lg" asChild>
-                <Link href="https://docs.google.com/forms/d/1IMIf2SPaB2SHVlUQ_K8I6vritWAkJoxyKQAgR0NgOHs/edit">
-                  Tell me about yourself
-                </Link>
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-4">
+                {/* <Button size="lg" variant="outline" asChild>
+                  <Link href="/chat">Chat with Mise Bot</Link>
+                </Button> */}
+                <Button size="lg" asChild>
+                  <Link href="https://docs.google.com/forms/d/1IMIf2SPaB2SHVlUQ_K8I6vritWAkJoxyKQAgR0NgOHs/edit">
+                    Tell me about yourself
+                  </Link>
+                </Button>
+              </div>
             </div>
           </div>
         </section>
