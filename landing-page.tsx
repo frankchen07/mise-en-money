@@ -86,7 +86,7 @@ export default function LandingPage() {
               <div className="space-y-6 max-w-[600px]">
                 <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Get Personalized Coaching</h2>
                 <p className="text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
-                  Just because I pieced together my own personal finances doesn't mean you have to. Whether you're looking to aggressively grow your savings, pay off some pesky debt, or work out the kinks in a system, personalized coaching can make a difference. Let's chat and see how we can turn your goals into a reality!
+                  Just because I pieced together my own personal finances doesn't mean you have to. Whether you're looking to aggressively grow your savings, pay off some pesky debt, or work out the kinks in your system, personalized coaching can accelerate your progress. Let's chat and see how we can turn your goals into a reality!
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-4">
