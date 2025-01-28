@@ -1,44 +1,96 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Switch } from "@/components/ui/switch"
 import Link from "next/link"
+import { useChat } from "ai/react"
 
 export default function ChatPage() {
-  const [messages, setMessages] = useState<Array<{ role: "user" | "assistant"; content: string }>>([])
+  const [streamingEnabled, setStreamingEnabled] = useState(true)
+  const scrollAreaRef = useRef<HTMLDivElement>(null)
+
+  // Custom chat implementation to handle streaming toggle
+  const [messages, setMessages] = useState<{ role: string; content: string }[]>([])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight
+    }
+  }, [scrollAreaRef])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!input.trim()) return
 
-    const userMessage = { role: "user" as const, content: input }
+    setIsLoading(true)
+    const userMessage = { role: "user", content: input }
     setMessages((prev) => [...prev, userMessage])
     setInput("")
-    setIsLoading(true)
 
     try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: input }),
-      })
+      if (streamingEnabled) {
+        // Streaming approach
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: input, stream: true }),
+        })
 
-      if (!response.ok) {
-        throw new Error("Failed to get response")
+        const reader = response.body?.getReader()
+        const decoder = new TextDecoder()
+        let assistantMessage = ""
+
+        if (reader) {
+          while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+
+            const chunk = decoder.decode(value)
+            const lines = chunk.split("\n")
+
+            for (const line of lines) {
+              if (line.startsWith("data: ")) {
+                const data = line.slice(6)
+                if (data === "[DONE]") continue
+                try {
+                  const parsed = JSON.parse(data)
+                  const content = parsed.choices[0]?.delta?.content || ""
+                  assistantMessage += content
+                  setMessages((prev) => {
+                    const newMessages = [...prev]
+                    const lastMessage = newMessages[newMessages.length - 1]
+                    if (lastMessage?.role === "assistant") {
+                      lastMessage.content = assistantMessage
+                    } else {
+                      newMessages.push({ role: "assistant", content: assistantMessage })
+                    }
+                    return newMessages
+                  })
+                } catch (e) {
+                  console.error("Failed to parse chunk:", e)
+                }
+              }
+            }
+          }
+        }
+      } else {
+        // Non-streaming approach
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: input, stream: false }),
+        })
+
+        const data = await response.json()
+        setMessages((prev) => [...prev, { role: "assistant", content: data.message }])
       }
-
-      const data = await response.json()
-      setMessages((prev) => [...prev, { role: "assistant", content: data.message }])
     } catch (error) {
       console.error("Error:", error)
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: "Sorry, I encountered an error. Please try again." },
-      ])
     } finally {
       setIsLoading(false)
     }
@@ -70,10 +122,17 @@ export default function ChatPage() {
             </svg>
             Chat with Mise Bot
           </h1>
-          <div className="w-8"></div> {/* Spacer for alignment */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600 dark:text-gray-300">Streaming</span>
+            <Switch
+              checked={streamingEnabled}
+              onCheckedChange={setStreamingEnabled}
+              aria-label="Toggle streaming mode"
+            />
+          </div>
         </div>
       </header>
-      <ScrollArea className="flex-1 p-4">
+      <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
         <div className="container mx-auto max-w-2xl">
           {messages.map((message, index) => (
             <div key={index} className={`mb-4 ${message.role === "user" ? "text-right" : "text-left"}`}>
