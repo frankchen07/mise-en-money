@@ -154,12 +154,12 @@ export default function ChatPage() {
       <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
         <div className="container mx-auto max-w-2xl">
           {messages.map((message, index) => (
-            <div key={index} className={`mb-4 ${message.role === "user" ? "text-right" : "text-left"}`}>
+            <div key={index} className="mb-4">
               <div
                 className={`inline-block p-3 rounded-lg ${
                   message.role === "user"
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-200 text-black dark:bg-gray-700 dark:text-white"
+                    ? "bg-blue-500 text-white ml-auto"
+                    : "bg-gray-200 text-black dark:bg-gray-700 dark:text-white mr-auto"
                 }`}
               >
                 <p className="whitespace-pre-wrap break-words">{message.content}</p>
