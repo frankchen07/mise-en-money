@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server"
-import { streamText } from "ai"
 
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY
 const DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions"
@@ -28,7 +27,9 @@ export async function POST(req: Request) {
     })
 
     if (!response.ok) {
-      throw new Error("Failed to fetch from DeepSeek API")
+      const errorText = await response.text()
+      console.error("DeepSeek API error:", errorText)
+      return NextResponse.json({ error: "Failed to fetch from DeepSeek API" }, { status: response.status })
     }
 
     // Handle streaming response

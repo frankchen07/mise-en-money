@@ -6,94 +6,99 @@ import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Switch } from "@/components/ui/switch"
 import Link from "next/link"
-import { useChat } from "ai/react"
 
 export default function ChatPage() {
   const [streamingEnabled, setStreamingEnabled] = useState(true)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
 
-  // Custom chat implementation to handle streaming toggle
   const [messages, setMessages] = useState<{ role: string; content: string }[]>([])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (scrollAreaRef.current) {
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight
     }
-  }, [scrollAreaRef])
+  }, [scrollAreaRef]) // Updated dependency
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!input.trim()) return
 
     setIsLoading(true)
+    setError(null)
     const userMessage = { role: "user", content: input }
     setMessages((prev) => [...prev, userMessage])
     setInput("")
 
-    try {
-      if (streamingEnabled) {
-        // Streaming approach
+    const sendRequest = async (retryCount = 0) => {
+      try {
         const response = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: input, stream: true }),
+          body: JSON.stringify({ message: input, stream: streamingEnabled }),
         })
 
-        const reader = response.body?.getReader()
-        const decoder = new TextDecoder()
-        let assistantMessage = ""
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
 
-        if (reader) {
-          while (true) {
-            const { done, value } = await reader.read()
-            if (done) break
+        if (streamingEnabled) {
+          const reader = response.body?.getReader()
+          const decoder = new TextDecoder()
+          let assistantMessage = ""
 
-            const chunk = decoder.decode(value)
-            const lines = chunk.split("\n")
+          if (reader) {
+            while (true) {
+              const { done, value } = await reader.read()
+              if (done) break
 
-            for (const line of lines) {
-              if (line.startsWith("data: ")) {
-                const data = line.slice(6)
-                if (data === "[DONE]") continue
-                try {
-                  const parsed = JSON.parse(data)
-                  const content = parsed.choices[0]?.delta?.content || ""
-                  assistantMessage += content
-                  setMessages((prev) => {
-                    const newMessages = [...prev]
-                    const lastMessage = newMessages[newMessages.length - 1]
-                    if (lastMessage?.role === "assistant") {
-                      lastMessage.content = assistantMessage
-                    } else {
-                      newMessages.push({ role: "assistant", content: assistantMessage })
-                    }
-                    return newMessages
-                  })
-                } catch (e) {
-                  console.error("Failed to parse chunk:", e)
+              const chunk = decoder.decode(value)
+              const lines = chunk.split("\n")
+
+              for (const line of lines) {
+                if (line.startsWith("data: ")) {
+                  const data = line.slice(6)
+                  if (data === "[DONE]") continue
+                  try {
+                    const parsed = JSON.parse(data)
+                    const content = parsed.choices[0]?.delta?.content || ""
+                    assistantMessage += content
+                    setMessages((prev) => {
+                      const newMessages = [...prev]
+                      const lastMessage = newMessages[newMessages.length - 1]
+                      if (lastMessage?.role === "assistant") {
+                        lastMessage.content = assistantMessage
+                      } else {
+                        newMessages.push({ role: "assistant", content: assistantMessage })
+                      }
+                      return newMessages
+                    })
+                  } catch (e) {
+                    console.error("Failed to parse chunk:", e)
+                  }
                 }
               }
             }
           }
+        } else {
+          const data = await response.json()
+          setMessages((prev) => [...prev, { role: "assistant", content: data.message }])
         }
-      } else {
-        // Non-streaming approach
-        const response = await fetch("/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: input, stream: false }),
-        })
-
-        const data = await response.json()
-        setMessages((prev) => [...prev, { role: "assistant", content: data.message }])
+      } catch (error) {
+        console.error("Error:", error)
+        if (retryCount < 3) {
+          console.log(`Retrying... (${retryCount + 1})`)
+          await sendRequest(retryCount + 1)
+        } else {
+          setError("Failed to get a response. Please try again.")
+        }
       }
-    } catch (error) {
-      console.error("Error:", error)
-    } finally {
-      setIsLoading(false)
     }
+
+    await sendRequest()
+    setIsLoading(false)
   }
 
   return (
@@ -154,6 +159,7 @@ export default function ChatPage() {
               </span>
             </div>
           )}
+          {error && <div className="text-center text-red-500 mt-4">{error}</div>}
         </div>
       </ScrollArea>
       <footer className="p-4 border-t bg-white dark:bg-gray-800">
