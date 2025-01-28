@@ -4,7 +4,7 @@ const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY
 const DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions"
 
 export const runtime = "nodejs"
-export const maxDuration = 300 // Set maximum runtime to 5 minutes
+export const maxDuration = 60 // Set maximum runtime to 60 seconds (maximum allowed for hobby plan)
 
 export async function POST(req: Request) {
   if (!DEEPSEEK_API_KEY) {
@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     const { message, stream = true } = await req.json()
 
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 60000) // 60 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 55000) // 55 second timeout
 
     const response = await fetch(DEEPSEEK_API_URL, {
       method: "POST",
