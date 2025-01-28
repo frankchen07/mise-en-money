@@ -70,13 +70,18 @@ export async function POST(req: Request) {
                       controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`))
                     } catch (e) {
                       console.error("Failed to parse chunk:", e)
+                      controller.enqueue(
+                        encoder.encode(`data: ${JSON.stringify({ error: "Failed to parse response" })}\n\n`),
+                      )
                     }
                   }
                 }
               }
               controller.close()
             } catch (error) {
-              controller.error(error)
+              console.error("Stream processing error:", error)
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: "Stream processing error" })}\n\n`))
+              controller.close()
             }
           },
         }),

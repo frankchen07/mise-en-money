@@ -47,25 +47,27 @@ export default function ChatPage() {
 
       if (streamingEnabled) {
         const reader = response.body?.getReader()
-        const decoder = new TextDecoder()
         let assistantMessage = ""
 
         if (reader) {
+          const decoder = new TextDecoder()
           while (true) {
             const { done, value } = await reader.read()
             if (done) break
 
             const chunk = decoder.decode(value)
-            const lines = chunk.split("\n")
+            const lines = chunk.split("\n\n")
 
             for (const line of lines) {
               if (line.startsWith("data: ")) {
-                const data = line.slice(6)
+                const data = line.slice(6).trim()
                 if (data === "[DONE]") continue
                 try {
                   const parsed = JSON.parse(data)
-                  const content = parsed.choices[0]?.delta?.content || ""
-                  assistantMessage += content
+                  if (parsed.error) {
+                    throw new Error(parsed.error)
+                  }
+                  assistantMessage += parsed.content
                   setMessages((prev) => {
                     const newMessages = [...prev]
                     const lastMessage = newMessages[newMessages.length - 1]
@@ -78,6 +80,7 @@ export default function ChatPage() {
                   })
                 } catch (e) {
                   console.error("Failed to parse chunk:", e)
+                  throw new Error("Failed to parse response from server")
                 }
               }
             }
@@ -85,11 +88,21 @@ export default function ChatPage() {
         }
       } else {
         const data = await response.json()
+        if (data.error) {
+          throw new Error(data.error)
+        }
         setMessages((prev) => [...prev, { role: "assistant", content: data.message }])
       }
     } catch (error) {
       console.error("Error:", error)
       setError(error.message || "An error occurred while processing your request.")
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "I'm sorry, but I encountered an error while processing your request. Please try again later.",
+        },
+      ])
     } finally {
       setIsLoading(false)
     }
