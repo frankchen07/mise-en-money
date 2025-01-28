@@ -42,21 +42,56 @@ export async function POST(req: Request) {
       )
     }
 
-    // Handle streaming response
     if (stream) {
-      const stream = response.body
-      return new Response(stream, {
-        headers: {
-          "Content-Type": "text/event-stream",
-          "Cache-Control": "no-cache",
-          Connection: "keep-alive",
-        },
-      })
-    }
+      const reader = response.body?.getReader()
+      const encoder = new TextEncoder()
 
-    // Handle non-streaming response
-    const data = await response.json()
-    return NextResponse.json({ message: data.choices[0].message.content })
+      return new Response(
+        new ReadableStream({
+          async start(controller) {
+            try {
+              while (true) {
+                const { done, value } = await reader.read()
+                if (done) break
+
+                const chunk = new TextDecoder().decode(value)
+                const lines = chunk.split("\n")
+
+                for (const line of lines) {
+                  if (line.startsWith("data: ")) {
+                    const data = line.slice(6)
+                    if (data === "[DONE]") {
+                      controller.enqueue(encoder.encode("data: [DONE]\n\n"))
+                      continue
+                    }
+                    try {
+                      const parsed = JSON.parse(data)
+                      const content = parsed.choices[0]?.delta?.content || ""
+                      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`))
+                    } catch (e) {
+                      console.error("Failed to parse chunk:", e)
+                    }
+                  }
+                }
+              }
+              controller.close()
+            } catch (error) {
+              controller.error(error)
+            }
+          },
+        }),
+        {
+          headers: {
+            "Content-Type": "text/event-stream",
+            "Cache-Control": "no-cache",
+            Connection: "keep-alive",
+          },
+        },
+      )
+    } else {
+      const data = await response.json()
+      return NextResponse.json({ message: data.choices[0].message.content })
+    }
   } catch (error) {
     console.error("Error:", error)
     if (error.name === "AbortError") {
