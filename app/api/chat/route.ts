@@ -4,6 +4,7 @@ const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY
 const DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions"
 
 export const runtime = "nodejs"
+export const maxDuration = 300 // Set maximum runtime to 5 minutes
 
 export async function POST(req: Request) {
   if (!DEEPSEEK_API_KEY) {
@@ -12,6 +13,9 @@ export async function POST(req: Request) {
 
   try {
     const { message, stream = true } = await req.json()
+
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 60000) // 60 second timeout
 
     const response = await fetch(DEEPSEEK_API_URL, {
       method: "POST",
@@ -24,12 +28,18 @@ export async function POST(req: Request) {
         messages: [{ role: "user", content: message }],
         stream: stream,
       }),
+      signal: controller.signal,
     })
+
+    clearTimeout(timeoutId)
 
     if (!response.ok) {
       const errorText = await response.text()
       console.error("DeepSeek API error:", errorText)
-      return NextResponse.json({ error: "Failed to fetch from DeepSeek API" }, { status: response.status })
+      return NextResponse.json(
+        { error: `DeepSeek API error: ${response.status} ${response.statusText}` },
+        { status: response.status },
+      )
     }
 
     // Handle streaming response
@@ -49,6 +59,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: data.choices[0].message.content })
   } catch (error) {
     console.error("Error:", error)
+    if (error.name === "AbortError") {
+      return NextResponse.json({ error: "Request timed out" }, { status: 504 })
+    }
     return NextResponse.json({ error: "Failed to process the request" }, { status: 500 })
   }
 }

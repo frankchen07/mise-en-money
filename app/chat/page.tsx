@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, type KeyboardEvent } from "react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Switch } from "@/components/ui/switch"
 import Link from "next/link"
@@ -10,6 +10,7 @@ import Link from "next/link"
 export default function ChatPage() {
   const [streamingEnabled, setStreamingEnabled] = useState(true)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const [messages, setMessages] = useState<{ role: string; content: string }[]>([])
   const [input, setInput] = useState("")
@@ -22,8 +23,8 @@ export default function ChatPage() {
     }
   }, [scrollAreaRef]) // Updated dependency
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (e?: React.FormEvent) => {
+    e?.preventDefault()
     if (!input.trim()) return
 
     setIsLoading(true)
@@ -32,73 +33,73 @@ export default function ChatPage() {
     setMessages((prev) => [...prev, userMessage])
     setInput("")
 
-    const sendRequest = async (retryCount = 0) => {
-      try {
-        const response = await fetch("/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: input, stream: streamingEnabled }),
-        })
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: input, stream: streamingEnabled }),
+      })
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
+      }
 
-        if (streamingEnabled) {
-          const reader = response.body?.getReader()
-          const decoder = new TextDecoder()
-          let assistantMessage = ""
+      if (streamingEnabled) {
+        const reader = response.body?.getReader()
+        const decoder = new TextDecoder()
+        let assistantMessage = ""
 
-          if (reader) {
-            while (true) {
-              const { done, value } = await reader.read()
-              if (done) break
+        if (reader) {
+          while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
 
-              const chunk = decoder.decode(value)
-              const lines = chunk.split("\n")
+            const chunk = decoder.decode(value)
+            const lines = chunk.split("\n")
 
-              for (const line of lines) {
-                if (line.startsWith("data: ")) {
-                  const data = line.slice(6)
-                  if (data === "[DONE]") continue
-                  try {
-                    const parsed = JSON.parse(data)
-                    const content = parsed.choices[0]?.delta?.content || ""
-                    assistantMessage += content
-                    setMessages((prev) => {
-                      const newMessages = [...prev]
-                      const lastMessage = newMessages[newMessages.length - 1]
-                      if (lastMessage?.role === "assistant") {
-                        lastMessage.content = assistantMessage
-                      } else {
-                        newMessages.push({ role: "assistant", content: assistantMessage })
-                      }
-                      return newMessages
-                    })
-                  } catch (e) {
-                    console.error("Failed to parse chunk:", e)
-                  }
+            for (const line of lines) {
+              if (line.startsWith("data: ")) {
+                const data = line.slice(6)
+                if (data === "[DONE]") continue
+                try {
+                  const parsed = JSON.parse(data)
+                  const content = parsed.choices[0]?.delta?.content || ""
+                  assistantMessage += content
+                  setMessages((prev) => {
+                    const newMessages = [...prev]
+                    const lastMessage = newMessages[newMessages.length - 1]
+                    if (lastMessage?.role === "assistant") {
+                      lastMessage.content = assistantMessage
+                    } else {
+                      newMessages.push({ role: "assistant", content: assistantMessage })
+                    }
+                    return newMessages
+                  })
+                } catch (e) {
+                  console.error("Failed to parse chunk:", e)
                 }
               }
             }
           }
-        } else {
-          const data = await response.json()
-          setMessages((prev) => [...prev, { role: "assistant", content: data.message }])
         }
-      } catch (error) {
-        console.error("Error:", error)
-        if (retryCount < 3) {
-          console.log(`Retrying... (${retryCount + 1})`)
-          await sendRequest(retryCount + 1)
-        } else {
-          setError("Failed to get a response. Please try again.")
-        }
+      } else {
+        const data = await response.json()
+        setMessages((prev) => [...prev, { role: "assistant", content: data.message }])
       }
+    } catch (error) {
+      console.error("Error:", error)
+      setError(error.message || "An error occurred while processing your request.")
+    } finally {
+      setIsLoading(false)
     }
+  }
 
-    await sendRequest()
-    setIsLoading(false)
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault()
+      handleSubmit()
+    }
   }
 
   return (
@@ -148,7 +149,7 @@ export default function ChatPage() {
                     : "bg-gray-200 text-black dark:bg-gray-700 dark:text-white"
                 }`}
               >
-                {message.content}
+                <p className="whitespace-pre-wrap break-words">{message.content}</p>
               </div>
             </div>
           ))}
@@ -165,13 +166,15 @@ export default function ChatPage() {
       <footer className="p-4 border-t bg-white dark:bg-gray-800">
         <form onSubmit={handleSubmit} className="container mx-auto max-w-2xl">
           <div className="flex gap-2">
-            <Input
-              type="text"
-              placeholder="Type your message here..."
+            <Textarea
+              ref={textareaRef}
+              placeholder="Type your message here... (Shift+Enter for new line)"
               value={input}
               onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
               disabled={isLoading}
-              className="flex-1"
+              className="flex-1 min-h-[2.5rem] max-h-32 resize-none"
+              rows={1}
             />
             <Button type="submit" disabled={isLoading}>
               Send
