@@ -25,10 +25,10 @@ export default function AboutPage() {
                 </h1>
                 <div className="space-y-4 text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
                   <p>
-                  Mise en Money is personal finance for service workers.
+                  Mise en Money is personal finance education systemized in a way that's easy to understand.
                   </p>
                   <p>
-                  It’s a play off of “mise en place”, which means “everything in it’s place.” Chefs use it to ensure that everything they need for a hectic service is ready-to-go so they don’t end up in the weeds. We want this kind of organization for our finances.
+                  It’s a play off of “mise en place”, which means “everything in its place.” Chefs use it to ensure that everything they need for a hectic service is ready-to-go so they don’t end up in the weeds. We want this kind of organization for our finances.
                   </p>
                   <p>
                   When I look back at my own money journey, piecing together how to deal with my finances was lonely and stressful, and I wish I had better help.
