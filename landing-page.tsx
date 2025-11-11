@@ -46,7 +46,7 @@ export default function LandingPage() {
         </nav>
       </header>
       <main className="flex-1 flex flex-col">
-        <section className="flex-1 flex items-center justify-center w-full py-12 md:py-24 lg:py-32 xl:py-48">
+        {/* <section className="flex-1 flex items-center justify-center w-full py-12 md:py-24 lg:py-32 xl:py-48">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center space-y-8 text-center">
               <div className="space-y-6 max-w-[600px] mx-auto">
@@ -79,8 +79,8 @@ export default function LandingPage() {
               )}
             </div>
           </div>
-        </section>
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-gray-100 dark:bg-gray-800">
+        </section> */}
+        {/* <section className="w-full py-12 md:py-24 lg:py-32 bg-gray-100 dark:bg-gray-800">
           <div className="container px-4 md:px-6 mx-auto">
             <div className="flex flex-col items-center space-y-8 text-center">
               <div className="space-y-6 max-w-[600px]">
@@ -101,7 +101,7 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
-        </section>
+        </section> */}
       </main>
       <footer className="w-full py-6 px-4 md:px-6 border-t">
         <div className="container mx-auto flex flex-col sm:flex-row justify-between items-center">
